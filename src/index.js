@@ -1,8 +1,11 @@
 const express = require('express');
 const webSocket = require('ws');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 
 const setupWebSocket = (server) => {
@@ -15,12 +18,13 @@ const setupWebSocket = (server) => {
         
         clients.add(ws);
         
-        //ws.send('¡Bienvenido al servidor WebSocket!');
+        ws.send('¡Bienvenido al servidor WebSocket!');
 
         ws.on('message', (message) => {
             console.log('Mensaje recibido: %s', message);
             
             clients.forEach(client => {
+                // Verificar que el cliente esté activo
                 if (client.readyState === webSocket.OPEN) {
                     client.send(`${message}`);
                 }
@@ -34,12 +38,17 @@ const setupWebSocket = (server) => {
     });
 };
 
-const server = app.listen(process.env.PORT || 5000, () => {
-    console.log(`Servidor Express corriendo en http://localhost:${process.env.PORT || 5000}`);
+app.get('/', (req, res) => {
+    res.send('Servidor de WebSocket funcionando. Conecta con tu cliente WebSocket.');
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
+const PORT = process.env.PORT || 5000;
+const server = app.listen(PORT, () => {
+    console.log(`Servidor Express corriendo en el puerto ${PORT}`);
 });
 
 setupWebSocket(server);
-
-app.get('/', (req, res) => {
-    res.send('¡Hola Mundo!');
-});
